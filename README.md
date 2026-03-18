@@ -1,4 +1,4 @@
-# oc-include-guard
+# clawback
 
 A CLI tool to manage modular OpenClaw configuration using JSON5 `$include` directives.
 
@@ -19,21 +19,21 @@ Treat `openclaw.json` as a **build artifact** rendered from a master `config/ope
 
 ```bash
 # Render openclaw.json from config/openclaw.json5
-oc-include-guard render
+clawback render
 
 # Show diffs between current openclaw.json and what render would produce
-oc-include-guard diff
+clawback diff
 
 # Backport changes from openclaw.json to JSON5 sources, then re-render
-oc-include-guard sync
+clawback sync
 
 # Check exit code only (for CI/heartbeat)
-oc-include-guard diff --quiet
+clawback diff --quiet
 ```
 
 ## Configuration
 
-Place `.oc-include-guard.json5` in your `~/.openclaw/` directory:
+Place `.clawback.json5` in your `~/.openclaw/` directory:
 
 ```json5
 {
@@ -51,7 +51,7 @@ Place `.oc-include-guard.json5` in your `~/.openclaw/` directory:
 ## Install
 
 ```bash
-go install github.com/jeff-french/oc-include-guard@latest
+go install github.com/jeff-french/clawback@latest
 ```
 
 ## License

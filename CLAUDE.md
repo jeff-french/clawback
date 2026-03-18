@@ -1,4 +1,4 @@
-# CLAUDE.md — oc-include-guard
+# CLAUDE.md — clawback
 
 ## What This Is
 
@@ -9,7 +9,7 @@ A Go CLI tool that manages modular OpenClaw configuration. It treats `openclaw.j
 ```
 ~/.openclaw/
 ├── openclaw.json           ← BUILD ARTIFACT (rendered output)
-├── .oc-include-guard.json5 ← tool config
+├── .clawback.json5 ← tool config
 └── config/
     ├── openclaw.json5      ← MASTER TEMPLATE (source of truth)
     ├── env.json5
@@ -65,7 +65,7 @@ This is the critical requirement. When backporting changes to JSON5 files:
 5. **Never rewrite the entire file from parsed data** — always do surgical text edits
 6. For **removed keys** (in openclaw.json but not JSON5): during sync, this means openclaw.json lost a key that JSON5 has — keep the JSON5 version (JSON5 is source of truth for non-passthrough sections)
 
-## Config File (`.oc-include-guard.json5`)
+## Config File (`.clawback.json5`)
 
 ```json5
 {
@@ -97,7 +97,7 @@ The tool resolves all paths relative to `~/.openclaw/` (the OpenClaw home direct
 ## Go Project Structure
 
 ```
-oc-include-guard/
+clawback/
 ├── main.go              # CLI entry point (cobra or just flag)
 ├── go.mod
 ├── go.sum
@@ -108,7 +108,7 @@ oc-include-guard/
 │   └── sync.go          # sync subcommand
 ├── internal/
 │   ├── config/
-│   │   └── config.go    # Tool config loading (.oc-include-guard.json5)
+│   │   └── config.go    # Tool config loading (.clawback.json5)
 │   ├── json5/
 │   │   ├── parse.go     # JSON5 parsing (to map[string]any)
 │   │   ├── edit.go      # Surgical text editing (comment-preserving writes)
@@ -183,7 +183,7 @@ Write table-driven tests. Key scenarios:
 ## Build
 
 ```bash
-go build -o oc-include-guard .
+go build -o clawback .
 ```
 
 ## Style
