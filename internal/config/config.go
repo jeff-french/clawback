@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -74,10 +73,4 @@ func (c *Config) IsPassthrough(path string) bool {
 		}
 	}
 	return false
-}
-
-// MarshalJSON implements a custom JSON marshal to match the expected format.
-func (c *Config) MarshalJSON() ([]byte, error) {
-	type Alias Config
-	return json.Marshal((*Alias)(c))
 }
