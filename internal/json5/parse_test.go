@@ -83,3 +83,24 @@ func TestParseFile(t *testing.T) {
 		t.Errorf("expected key=value, got %v", result["key"])
 	}
 }
+
+func TestParseFileRejectsSymlink(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create the real file
+	real := filepath.Join(dir, "real.json5")
+	if err := os.WriteFile(real, []byte(`{ key: "value" }`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a symlink pointing to it
+	link := filepath.Join(dir, "link.json5")
+	if err := os.Symlink(real, link); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+
+	_, err := ParseFile(link)
+	if err == nil {
+		t.Fatal("expected error when reading symlink, got nil")
+	}
+}
