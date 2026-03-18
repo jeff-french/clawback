@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,11 +34,18 @@ func Load(homeDir string) (*Config, error) {
 	}
 
 	path := filepath.Join(homeDir, ".clawback.json5")
-	data, err := os.ReadFile(path)
+	info, err := os.Lstat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return cfg, nil
 		}
+		return nil, err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return nil, fmt.Errorf("refusing to read symlink: %s", path)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
 		return nil, err
 	}
 
@@ -75,4 +83,27 @@ func (c *Config) IsPassthrough(path string) bool {
 		}
 	}
 	return false
+}
+
+// Validate checks that all configured paths stay within homeDir.
+// A malicious .clawback.json5 could otherwise point outputFile or
+// masterTemplate at an arbitrary location on the filesystem.
+func (c *Config) Validate(homeDir string) error {
+	root := filepath.Clean(homeDir)
+	checks := []struct {
+		name string
+		val  string
+	}{
+		{"configDir", c.ConfigDir},
+		{"outputFile", c.OutputFile},
+		{"masterTemplate", c.MasterTemplate},
+	}
+	for _, ch := range checks {
+		abs := c.ResolvePath(homeDir, ch.val)
+		rel, err := filepath.Rel(root, abs)
+		if err != nil || strings.HasPrefix(rel, "..") {
+			return fmt.Errorf("config %s path %q escapes home directory", ch.name, ch.val)
+		}
+	}
+	return nil
 }

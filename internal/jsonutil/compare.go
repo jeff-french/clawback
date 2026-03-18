@@ -45,8 +45,8 @@ func compareValues(path string, old, new any, diffs *[]Diff) {
 		return
 	}
 
-	oldArr, oldIsArr := toSlice(old)
-	newArr, newIsArr := toSlice(new)
+	_, oldIsArr := toSlice(old)
+	_, newIsArr := toSlice(new)
 
 	if oldIsArr && newIsArr {
 		if !reflect.DeepEqual(normalizeJSON(old), normalizeJSON(new)) {
@@ -57,8 +57,6 @@ func compareValues(path string, old, new any, diffs *[]Diff) {
 				NewValue: new,
 			})
 		}
-		_ = oldArr
-		_ = newArr
 		return
 	}
 

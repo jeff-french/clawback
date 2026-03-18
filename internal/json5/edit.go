@@ -288,12 +288,10 @@ func appendKey(content string, key string, value string) string {
 		comma = ","
 	}
 
-	// Format: detect if keys are quoted or unquoted
-	quotedKey := key
+	// Format: use unquoted key if the file already uses that style, otherwise quote.
+	quotedKey := fmt.Sprintf(`"%s"`, key)
 	if !needsQuoting(key) && usesUnquotedKeys(content) {
 		quotedKey = key
-	} else {
-		quotedKey = fmt.Sprintf(`"%s"`, key)
 	}
 
 	insertion := fmt.Sprintf("%s\n%s%s: %s,", comma, indent, quotedKey, value)

@@ -36,9 +36,14 @@ func Render(homeDir string, cfg *config.Config) (*Result, error) {
 		return nil, fmt.Errorf("resolving includes: %w", err)
 	}
 
-	// Apply passthrough sections from existing output file
+	// Apply passthrough sections from existing output file.
+	// Silently skip only when the file doesn't exist yet (first render).
 	outputPath := cfg.OutputPath(homeDir)
-	if existing, err := readExistingOutput(outputPath); err == nil {
+	existing, err := readExistingOutput(outputPath)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, fmt.Errorf("reading existing output %s: %w", outputPath, err)
+	}
+	if existing != nil {
 		applyPassthrough(resolved, existing, cfg)
 	}
 
@@ -56,6 +61,13 @@ func Render(homeDir string, cfg *config.Config) (*Result, error) {
 }
 
 func readExistingOutput(path string) (map[string]any, error) {
+	info, err := os.Lstat(path)
+	if err != nil {
+		return nil, err
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return nil, fmt.Errorf("refusing to read symlink: %s", path)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

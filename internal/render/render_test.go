@@ -127,3 +127,33 @@ func TestRenderMissingTemplate(t *testing.T) {
 		t.Error("expected error for missing template")
 	}
 }
+
+func TestRenderRejectsSymlinkOutput(t *testing.T) {
+	dir := t.TempDir()
+	configDir := filepath.Join(dir, "config")
+	os.MkdirAll(configDir, 0o755)
+
+	// Minimal valid template
+	os.WriteFile(filepath.Join(configDir, "openclaw.json5"), []byte(`{ name: "test" }`), 0o644)
+
+	// Replace openclaw.json with a symlink pointing elsewhere
+	realTarget := filepath.Join(dir, "real-output.json")
+	os.WriteFile(realTarget, []byte(`{"name":"old"}`), 0o644)
+	symlinkPath := filepath.Join(dir, "openclaw.json")
+	if err := os.Symlink(realTarget, symlinkPath); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+
+	cfg := &config.Config{
+		ConfigDir:      "./config",
+		OutputFile:     "./openclaw.json",
+		MasterTemplate: "./config/openclaw.json5",
+		Passthrough:    []string{"meta"},
+	}
+
+	// Render should refuse to read the symlink as passthrough input
+	_, err := Render(dir, cfg)
+	if err == nil {
+		t.Fatal("expected error when openclaw.json is a symlink, got nil")
+	}
+}

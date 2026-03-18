@@ -34,6 +34,10 @@ func NewRootCmd() *cobra.Command {
 				return fmt.Errorf("loading config: %w", err)
 			}
 
+			if err := cfg.Validate(homeDir); err != nil {
+				return fmt.Errorf("invalid config: %w", err)
+			}
+
 			return nil
 		},
 		SilenceUsage:  true,
