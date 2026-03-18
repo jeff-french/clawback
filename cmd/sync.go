@@ -139,7 +139,7 @@ func applyEdits(filePath string, diffs []jsonutil.Diff, sources map[string]strin
 		}
 	}
 
-	return os.WriteFile(filePath, []byte(text), 0o644)
+	return os.WriteFile(filePath, []byte(text), 0o600)
 }
 
 // localKeyForFile extracts the local key name from a full JSON path,
@@ -163,12 +163,3 @@ func localKeyForFile(path string, filePath string, sources map[string]string) st
 	return path
 }
 
-// IsPassthroughPath checks if a diff path falls under any passthrough path.
-func IsPassthroughPath(path string, cfg *config.Config) bool {
-	for _, pt := range cfg.Passthrough {
-		if path == pt || strings.HasPrefix(path, pt+".") {
-			return true
-		}
-	}
-	return false
-}
