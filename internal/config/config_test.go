@@ -55,22 +55,6 @@ func TestLoadFromFile(t *testing.T) {
 	}
 }
 
-func TestIsPassthrough(t *testing.T) {
-	cfg := &Config{
-		Passthrough: []string{"meta", "wizard", "plugins.installs"},
-	}
-
-	if !cfg.IsPassthrough("meta") {
-		t.Error("meta should be passthrough")
-	}
-	if !cfg.IsPassthrough("plugins.installs") {
-		t.Error("plugins.installs should be passthrough")
-	}
-	if cfg.IsPassthrough("env") {
-		t.Error("env should not be passthrough")
-	}
-}
-
 func TestLoadRejectsSymlink(t *testing.T) {
 	dir := t.TempDir()
 
@@ -87,19 +71,6 @@ func TestLoadRejectsSymlink(t *testing.T) {
 	_, err := Load(dir)
 	if err == nil {
 		t.Fatal("expected error when .clawback.json5 is a symlink, got nil")
-	}
-}
-
-func TestIsPassthroughChild(t *testing.T) {
-	cfg := &Config{
-		Passthrough: []string{"plugins.installs"},
-	}
-
-	if !cfg.IsPassthrough("plugins.installs.foo") {
-		t.Error("plugins.installs.foo should be passthrough (child of plugins.installs)")
-	}
-	if cfg.IsPassthrough("plugins.other") {
-		t.Error("plugins.other should not be passthrough")
 	}
 }
 

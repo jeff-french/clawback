@@ -74,17 +74,6 @@ func (c *Config) MasterTemplatePath(homeDir string) string {
 	return c.ResolvePath(homeDir, c.MasterTemplate)
 }
 
-// IsPassthrough returns true if the given JSON path is a passthrough section
-// or a child of one (e.g. "plugins.installs.foo" matches "plugins.installs").
-func (c *Config) IsPassthrough(path string) bool {
-	for _, p := range c.Passthrough {
-		if p == path || strings.HasPrefix(path, p+".") {
-			return true
-		}
-	}
-	return false
-}
-
 // Validate checks that all configured paths stay within homeDir.
 // A malicious .clawback.json5 could otherwise point outputFile or
 // masterTemplate at an arbitrary location on the filesystem.
