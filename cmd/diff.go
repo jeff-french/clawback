@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var errDiffFound = &ExitError{Code: 1}
+
 func newDiffCmd() *cobra.Command {
 	var quiet bool
 	var jsonOutput bool
@@ -28,11 +30,10 @@ func newDiffCmd() *cobra.Command {
 			existingData, err := os.ReadFile(outputPath)
 			if err != nil {
 				if os.IsNotExist(err) {
-					if quiet {
-						os.Exit(1)
+					if !quiet {
+						fmt.Fprintln(cmd.OutOrStdout(), "Output file does not exist yet. Run 'clawback render' to create it.")
 					}
-					fmt.Fprintln(cmd.OutOrStdout(), "Output file does not exist yet. Run 'clawback render' to create it.")
-					os.Exit(1)
+					return errDiffFound
 				}
 				return fmt.Errorf("reading %s: %w", outputPath, err)
 			}
@@ -52,18 +53,20 @@ func newDiffCmd() *cobra.Command {
 			}
 
 			if quiet {
-				os.Exit(1)
+				return errDiffFound
 			}
 
 			if jsonOutput {
 				enc := json.NewEncoder(cmd.OutOrStdout())
 				enc.SetIndent("", "  ")
-				return enc.Encode(diffs)
+				if err := enc.Encode(diffs); err != nil {
+					return err
+				}
+				return errDiffFound
 			}
 
 			fmt.Fprint(cmd.OutOrStdout(), jsonutil.FormatDiffs(diffs))
-			os.Exit(1)
-			return nil
+			return errDiffFound
 		},
 	}
 

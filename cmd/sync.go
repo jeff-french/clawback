@@ -60,11 +60,14 @@ func runSync(cmd *cobra.Command, homeDir string, cfg *config.Config, dryRun bool
 	// Group diffs by source file
 	fileEdits := make(map[string][]jsonutil.Diff)
 	for _, d := range diffs {
-		// For passthrough sections, we copy from openclaw.json → config
-		// For non-passthrough, we also backport new/changed keys from openclaw.json → config
-		// But removed keys (in openclaw.json but not config) — keep config version
+		// Passthrough sections flow FROM openclaw.json TO the master template (via render),
+		// not the reverse — never backport them during sync.
+		if cfg.IsPassthrough(d.Path) {
+			continue
+		}
+
+		// Removed keys (in rendered/config but not in openclaw.json) — keep config version.
 		if d.Type == jsonutil.DiffRemoved {
-			// Key is in rendered (config) but not in openclaw.json — keep config version
 			continue
 		}
 

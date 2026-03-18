@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/titanous/json5"
 )
@@ -65,10 +66,11 @@ func (c *Config) MasterTemplatePath(homeDir string) string {
 	return c.ResolvePath(homeDir, c.MasterTemplate)
 }
 
-// IsPassthrough returns true if the given JSON path is a passthrough section.
+// IsPassthrough returns true if the given JSON path is a passthrough section
+// or a child of one (e.g. "plugins.installs.foo" matches "plugins.installs").
 func (c *Config) IsPassthrough(path string) bool {
 	for _, p := range c.Passthrough {
-		if p == path {
+		if p == path || strings.HasPrefix(path, p+".") {
 			return true
 		}
 	}
