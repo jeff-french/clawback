@@ -216,12 +216,56 @@ func AppendToObject(content string, key string, value string) string {
 	return appendKey(content, key, value)
 }
 
+// findOutermostClosingBrace returns the index of the } that closes the
+// outermost object in content, skipping strings and comments. Returns -1
+// if no such brace is found.
+func findOutermostClosingBrace(content string) int {
+	depth := 0
+	last := -1
+	i := 0
+	for i < len(content) {
+		// Skip line comments
+		if i+1 < len(content) && content[i] == '/' && content[i+1] == '/' {
+			for i < len(content) && content[i] != '\n' {
+				i++
+			}
+			continue
+		}
+		// Skip block comments
+		if i+1 < len(content) && content[i] == '/' && content[i+1] == '*' {
+			i += 2
+			for i+1 < len(content) && !(content[i] == '*' && content[i+1] == '/') {
+				i++
+			}
+			if i+1 < len(content) {
+				i += 2
+			}
+			continue
+		}
+		// Skip string literals
+		if content[i] == '"' || content[i] == '\'' {
+			i = findStringEnd(content, i)
+			continue
+		}
+		if content[i] == '{' {
+			depth++
+		} else if content[i] == '}' {
+			depth--
+			if depth == 0 {
+				last = i
+			}
+		}
+		i++
+	}
+	return last
+}
+
 func appendKey(content string, key string, value string) string {
 	// Detect indentation style
 	indent := detectIndent(content)
 
-	// Find the last closing brace
-	lastBrace := strings.LastIndex(content, "}")
+	// Find the } that closes the outermost object, skipping strings/comments.
+	lastBrace := findOutermostClosingBrace(content)
 	if lastBrace < 0 {
 		return content
 	}
