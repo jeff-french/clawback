@@ -1,0 +1,8 @@
+{
+  // Main config with plugins
+  name: "test-app",
+  plugins: { $include: "./plugins.json5" },
+  meta: {
+    generated: true,
+  },
+}

@@ -1,0 +1,6 @@
+{
+  // Master template
+  name: "my-openclaw",
+  version: "1.0.0",
+  env: { $include: "./env.json5" },
+}

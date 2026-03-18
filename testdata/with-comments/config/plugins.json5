@@ -1,0 +1,13 @@
+{
+  // Plugin configuration
+  // Do not remove these comments!
+  enabled: true,
+  installs: [
+    "plugin-a",
+    "plugin-b",
+  ],
+  settings: {
+    // Plugin-specific settings
+    autoUpdate: false,
+  },
+}

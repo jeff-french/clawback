@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "generated": true
+  },
+  "name": "test-app",
+  "plugins": {
+    "enabled": true,
+    "installs": [
+      "plugin-a",
+      "plugin-b"
+    ],
+    "settings": {
+      "autoUpdate": false
+    }
+  }
+}

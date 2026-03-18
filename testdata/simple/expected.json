@@ -1,0 +1,9 @@
+{
+  "env": {
+    "debug": true,
+    "logLevel": "info",
+    "timeout": 30
+  },
+  "name": "my-openclaw",
+  "version": "1.0.0"
+}
