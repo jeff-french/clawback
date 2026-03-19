@@ -3,7 +3,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -14,14 +13,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newSyncCmd() *cobra.Command {
+func newSyncCmd(ctx *appContext) *cobra.Command {
 	var dryRun bool
 
 	cmd := &cobra.Command{
 		Use:   "sync",
 		Short: "Backport changes from openclaw.json to JSON5 source files",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runSync(cmd, homeDir, cfg, dryRun)
+			return runSync(cmd, ctx.homeDir, ctx.cfg, dryRun)
 		},
 	}
 
@@ -139,7 +138,7 @@ func applyEdits(filePath string, diffs []jsonutil.Diff, sources map[string]strin
 		}
 	}
 
-	return os.WriteFile(filePath, []byte(text), 0o600)
+	return json5.SafeWriteFile(filePath, []byte(text), 0o600)
 }
 
 // localKeyForFile extracts the local key name from a full JSON path,

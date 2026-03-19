@@ -87,7 +87,7 @@ func WriteOutput(homeDir string, cfg *config.Config, result *Result) error {
 	if err := os.MkdirAll(filepath.Dir(outputPath), 0o755); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
-	if err := os.WriteFile(outputPath, result.JSON, 0o600); err != nil {
+	if err := json5.SafeWriteFile(outputPath, result.JSON, 0o600); err != nil {
 		return fmt.Errorf("writing %s: %w", outputPath, err)
 	}
 	return nil

@@ -9,32 +9,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
+// appContext holds resolved runtime state, replacing package-level globals.
+type appContext struct {
 	homeDir string
 	cfg     *config.Config
-)
+}
 
 func NewRootCmd() *cobra.Command {
+	var ctx appContext
+
 	rootCmd := &cobra.Command{
 		Use:   "clawback",
 		Short: "Manage modular OpenClaw configuration",
 		Long:  "A CLI tool that manages modular OpenClaw configuration. It treats openclaw.json as a build artifact rendered from JSON5 source files via $include directives.",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			if homeDir == "" {
+			if ctx.homeDir == "" {
 				home, err := os.UserHomeDir()
 				if err != nil {
 					return fmt.Errorf("determining home directory: %w", err)
 				}
-				homeDir = filepath.Join(home, ".openclaw")
+				ctx.homeDir = filepath.Join(home, ".openclaw")
 			}
 
 			var err error
-			cfg, err = config.Load(homeDir)
+			ctx.cfg, err = config.Load(ctx.homeDir)
 			if err != nil {
 				return fmt.Errorf("loading config: %w", err)
 			}
 
-			if err := cfg.Validate(homeDir); err != nil {
+			if err := ctx.cfg.Validate(ctx.homeDir); err != nil {
 				return fmt.Errorf("invalid config: %w", err)
 			}
 
@@ -44,11 +47,11 @@ func NewRootCmd() *cobra.Command {
 		SilenceErrors: true,
 	}
 
-	rootCmd.PersistentFlags().StringVar(&homeDir, "home", "", "OpenClaw home directory (default: ~/.openclaw)")
+	rootCmd.PersistentFlags().StringVar(&ctx.homeDir, "home", "", "OpenClaw home directory (default: ~/.openclaw)")
 
-	rootCmd.AddCommand(newRenderCmd())
-	rootCmd.AddCommand(newDiffCmd())
-	rootCmd.AddCommand(newSyncCmd())
+	rootCmd.AddCommand(newRenderCmd(&ctx))
+	rootCmd.AddCommand(newDiffCmd(&ctx))
+	rootCmd.AddCommand(newSyncCmd(&ctx))
 
 	return rootCmd
 }

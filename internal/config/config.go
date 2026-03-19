@@ -13,7 +13,11 @@ const DefaultConfigDir = "./config"
 const DefaultOutputFile = "./openclaw.json"
 const DefaultMasterTemplate = "./config/openclaw.json5"
 
-var DefaultPassthrough = []string{"meta", "wizard", "plugins.installs"}
+// DefaultPassthrough returns the default passthrough paths.
+// Returned as a function to prevent mutation of a shared slice.
+func DefaultPassthrough() []string {
+	return []string{"meta", "wizard", "plugins.installs"}
+}
 
 // Config represents the .clawback.json5 configuration file.
 type Config struct {
@@ -30,7 +34,7 @@ func Load(homeDir string) (*Config, error) {
 		ConfigDir:      DefaultConfigDir,
 		OutputFile:     DefaultOutputFile,
 		MasterTemplate: DefaultMasterTemplate,
-		Passthrough:    DefaultPassthrough,
+		Passthrough:    DefaultPassthrough(),
 	}
 
 	path := filepath.Join(homeDir, ".clawback.json5")
@@ -39,7 +43,7 @@ func Load(homeDir string) (*Config, error) {
 		if os.IsNotExist(err) {
 			return cfg, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("stat %s: %w", path, err)
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
 		return nil, fmt.Errorf("refusing to read symlink: %s", path)
@@ -50,11 +54,11 @@ func Load(homeDir string) (*Config, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 
 	if err := json5.Unmarshal(data, cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing %s: %w", path, err)
 	}
 
 	return cfg, nil

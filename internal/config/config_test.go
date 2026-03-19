@@ -22,8 +22,8 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.MasterTemplate != DefaultMasterTemplate {
 		t.Errorf("expected default masterTemplate %q, got %q", DefaultMasterTemplate, cfg.MasterTemplate)
 	}
-	if len(cfg.Passthrough) != len(DefaultPassthrough) {
-		t.Errorf("expected %d passthrough entries, got %d", len(DefaultPassthrough), len(cfg.Passthrough))
+	if len(cfg.Passthrough) != len(DefaultPassthrough()) {
+		t.Errorf("expected %d passthrough entries, got %d", len(DefaultPassthrough()), len(cfg.Passthrough))
 	}
 }
 

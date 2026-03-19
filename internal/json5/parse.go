@@ -3,6 +3,7 @@ package json5
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/titanous/json5"
 )
@@ -34,6 +35,57 @@ func SafeReadFile(path string) ([]byte, error) {
 		return nil, fmt.Errorf("file too large (%d bytes, limit %d): %s", info.Size(), maxFileSize, path)
 	}
 	return os.ReadFile(path)
+}
+
+// SafeWriteFile writes data to path atomically, refusing to follow symlinks.
+// It writes to a temp file in the same directory, then renames it into place.
+func SafeWriteFile(path string, data []byte, perm os.FileMode) error {
+	// Check that the target is not a symlink (if it already exists).
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("refusing to write through symlink: %s", path)
+		}
+	}
+
+	dir := filepath.Dir(path)
+	tmp, err := os.CreateTemp(dir, ".clawback-*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	// Clean up temp file on any failure path.
+	success := false
+	defer func() {
+		if !success {
+			os.Remove(tmpName)
+		}
+	}()
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return fmt.Errorf("writing temp file: %w", err)
+	}
+	if err := tmp.Chmod(perm); err != nil {
+		tmp.Close()
+		return fmt.Errorf("setting permissions: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		return fmt.Errorf("closing temp file: %w", err)
+	}
+
+	// Re-check symlink right before rename to narrow the TOCTOU window.
+	if info, err := os.Lstat(path); err == nil {
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("refusing to write through symlink: %s", path)
+		}
+	}
+
+	if err := os.Rename(tmpName, path); err != nil {
+		return fmt.Errorf("renaming temp file: %w", err)
+	}
+	success = true
+	return nil
 }
 
 // Parse parses JSON5 bytes into a map.

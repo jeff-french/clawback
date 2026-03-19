@@ -13,7 +13,7 @@ import (
 
 var errDiffFound = &ExitError{Code: 1}
 
-func newDiffCmd() *cobra.Command {
+func newDiffCmd(ctx *appContext) *cobra.Command {
 	var quiet bool
 	var jsonOutput bool
 
@@ -21,13 +21,13 @@ func newDiffCmd() *cobra.Command {
 		Use:   "diff",
 		Short: "Show differences between rendered output and current openclaw.json",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			result, err := render.Render(homeDir, cfg)
+			result, err := render.Render(ctx.homeDir, ctx.cfg)
 			if err != nil {
 				return err
 			}
 
 			// Read current output file (symlink + size checked)
-			outputPath := cfg.OutputPath(homeDir)
+			outputPath := ctx.cfg.OutputPath(ctx.homeDir)
 			existingData, err := json5.SafeReadFile(outputPath)
 			if err != nil {
 				if os.IsNotExist(err) {

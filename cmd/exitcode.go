@@ -1,5 +1,7 @@
 package cmd
 
+import "fmt"
+
 // ExitError signals a clean exit with a specific non-zero code.
 // Commands that use distinct exit codes to communicate status (e.g. diff:
 // 0 = clean, 1 = drifted, 2 = error) return this instead of calling os.Exit,
@@ -8,4 +10,4 @@ type ExitError struct {
 	Code int
 }
 
-func (e *ExitError) Error() string { return "" }
+func (e *ExitError) Error() string { return fmt.Sprintf("exit status %d", e.Code) }
