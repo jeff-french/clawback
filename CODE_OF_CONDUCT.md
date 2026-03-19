@@ -23,7 +23,7 @@ Examples of unacceptable behavior:
 
 ## Enforcement
 
-Instances of unacceptable behavior may be reported by contacting the project maintainers at **clawback-conduct@jeff-french.com**. All complaints will be reviewed and investigated privately and will result in a response that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality with regard to the reporter of an incident.
+Instances of unacceptable behavior may be reported privately by contacting the maintainers through their [GitHub profile](https://github.com/jeff-french). All complaints will be reviewed and investigated privately and will result in a response that is deemed necessary and appropriate to the circumstances. The project team is obligated to maintain confidentiality with regard to the reporter of an incident.
 
 ## Attribution
 
