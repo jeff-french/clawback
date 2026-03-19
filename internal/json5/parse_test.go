@@ -275,4 +275,3 @@ func TestSafeReadFile(t *testing.T) {
 		}
 	})
 }
-

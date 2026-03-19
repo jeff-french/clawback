@@ -21,6 +21,9 @@ Treat `openclaw.json` as a **build artifact** rendered from a master `config/ope
 # Initialize modular config from an existing openclaw.json
 clawback init
 
+# Preview what init would create without writing files
+clawback init --dry-run
+
 # Render openclaw.json from config/openclaw.json5
 clawback render
 

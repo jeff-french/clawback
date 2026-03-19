@@ -115,11 +115,11 @@ func TestIncludePreservesNonMapValues(t *testing.T) {
 
 	// Non-object values should pass through unchanged.
 	data := map[string]any{
-		"str":   "hello",
-		"num":   float64(42),
-		"bool":  true,
-		"arr":   []any{"a", "b"},
-		"null":  nil,
+		"str":  "hello",
+		"num":  float64(42),
+		"bool": true,
+		"arr":  []any{"a", "b"},
+		"null": nil,
 	}
 	result, sources, err := ResolveIncludes(data, dir)
 	if err != nil {

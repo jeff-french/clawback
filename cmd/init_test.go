@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"encoding/json"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +29,7 @@ func TestInitFromMonolith(t *testing.T) {
 		"config/wizard.json5",
 	} {
 		path := filepath.Join(dir, f)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
 			t.Errorf("expected file %s to exist", f)
 		}
 	}
@@ -59,7 +60,7 @@ func TestInitDryRun(t *testing.T) {
 
 	// No files should be written.
 	configDir := filepath.Join(dir, "config")
-	if _, err := os.Stat(configDir); !os.IsNotExist(err) {
+	if _, err := os.Stat(configDir); !errors.Is(err, fs.ErrNotExist) {
 		t.Error("config directory should not exist after dry-run")
 	}
 }
@@ -119,7 +120,7 @@ func TestInitWithArrays(t *testing.T) {
 	// "bindings" is an array — it should be inlined in the master template,
 	// not extracted to a separate file.
 	bindingsFile := filepath.Join(dir, "config", "bindings.json5")
-	if _, err := os.Stat(bindingsFile); !os.IsNotExist(err) {
+	if _, err := os.Stat(bindingsFile); !errors.Is(err, fs.ErrNotExist) {
 		t.Error("bindings.json5 should not exist — arrays should be inlined")
 	}
 
@@ -139,46 +140,15 @@ func TestInitWithArrays(t *testing.T) {
 func TestInitRoundTrip(t *testing.T) {
 	dir := setupFixture(t, "monolith")
 
-	// Read the original.
-	origData, err := os.ReadFile(filepath.Join(dir, "openclaw.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var original map[string]any
-	if err := json.Unmarshal(origData, &original); err != nil {
-		t.Fatal(err)
-	}
-
-	// Run init.
+	// Run init (which now also writes the rendered openclaw.json).
 	out, err := executeCmd([]string{"--home", dir, "init"})
 	if err != nil {
 		t.Fatalf("init failed: %v\nOutput: %s", err, out)
 	}
 
-	// Render and compare.
-	renderOut, err := executeCmd([]string{"--home", dir, "render"})
-	if err != nil {
-		t.Fatalf("render after init failed: %v\nOutput: %s", err, renderOut)
-	}
-
-	// Read the rendered output.
-	renderedData, err := os.ReadFile(filepath.Join(dir, "openclaw.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var rendered map[string]any
-	if err := json.Unmarshal(renderedData, &rendered); err != nil {
-		t.Fatal(err)
-	}
-
-	// Deep compare.
-	if len(original) != len(rendered) {
-		t.Errorf("key count mismatch: original=%d, rendered=%d", len(original), len(rendered))
-	}
-
-	// Use diff command for definitive check.
+	// Use diff command for definitive deep comparison.
 	_, diffErr := executeCmd([]string{"--home", dir, "diff"})
 	if diffErr != nil {
-		t.Errorf("diff should be clean after init+render, got: %v", diffErr)
+		t.Errorf("diff should be clean after init, got: %v", diffErr)
 	}
 }

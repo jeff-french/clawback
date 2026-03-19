@@ -109,6 +109,12 @@ func runInit(cmd *cobra.Command, homeDir string, dryRun, force bool) error {
 		obj := e.value.(map[string]any)
 		content := json5.FormatObject(obj) + "\n"
 		path := filepath.Join(configDir, e.key+".json5")
+		// Verify the file stays within configDir to prevent path traversal
+		// via crafted key names (e.g. "../evil").
+		rel, err := filepath.Rel(configDir, path)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) || filepath.IsAbs(rel) {
+			return fmt.Errorf("key %q would write outside config directory", e.key)
+		}
 		if err := json5.SafeWriteFile(path, []byte(content), 0o600); err != nil {
 			return fmt.Errorf("writing %s: %w", path, err)
 		}
@@ -136,6 +142,9 @@ func runInit(cmd *cobra.Command, homeDir string, dryRun, force bool) error {
 	if err != nil {
 		return fmt.Errorf("loading generated config: %w", err)
 	}
+	if err := cfg.Validate(homeDir); err != nil {
+		return fmt.Errorf("validating generated config: %w", err)
+	}
 	result, err := render.Render(homeDir, cfg)
 	if err != nil {
 		return fmt.Errorf("verifying round-trip: %w", err)
@@ -149,6 +158,11 @@ func runInit(cmd *cobra.Command, homeDir string, dryRun, force bool) error {
 		fmt.Fprintln(cmd.OutOrStdout(), "\nRound-trip verification passed — rendered output matches original.")
 	}
 
+	// Write the rendered openclaw.json so the on-disk artifact is consistent.
+	if err := render.WriteOutput(homeDir, cfg, result); err != nil {
+		return fmt.Errorf("writing rendered output: %w", err)
+	}
+
 	return nil
 }
 
@@ -157,18 +171,12 @@ func buildMasterTemplate(extracted []keyEntry, inlined []keyEntry) string {
 	b.WriteString("{\n")
 
 	for _, e := range extracted {
-		key := e.key
-		if json5.NeedsQuoting(key) {
-			key = fmt.Sprintf("%q", key)
-		}
+		key := json5.QuoteKey(e.key)
 		fmt.Fprintf(&b, "  %s: { $include: \"./%s.json5\" },\n", key, e.key)
 	}
 
 	for _, e := range inlined {
-		key := e.key
-		if json5.NeedsQuoting(key) {
-			key = fmt.Sprintf("%q", key)
-		}
+		key := json5.QuoteKey(e.key)
 		fmt.Fprintf(&b, "  %s: %s,\n", key, json5.FormatValue(e.value, 1))
 	}
 
@@ -177,15 +185,16 @@ func buildMasterTemplate(extracted []keyEntry, inlined []keyEntry) string {
 }
 
 func buildClawbackConfig() string {
-	return `{
-  configDir: "./config",
-  outputFile: "./openclaw.json",
-  masterTemplate: "./config/openclaw.json5",
-  passthrough: [
-    "meta",
-    "wizard",
-    "plugins.installs",
-  ],
-}
-`
+	var b strings.Builder
+	b.WriteString("{\n")
+	b.WriteString("  configDir: \"./config\",\n")
+	b.WriteString("  outputFile: \"./openclaw.json\",\n")
+	b.WriteString("  masterTemplate: \"./config/openclaw.json5\",\n")
+	b.WriteString("  passthrough: [\n")
+	for _, p := range config.DefaultPassthrough() {
+		fmt.Fprintf(&b, "    %q,\n", p)
+	}
+	b.WriteString("  ],\n")
+	b.WriteString("}\n")
+	return b.String()
 }

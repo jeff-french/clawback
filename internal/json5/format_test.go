@@ -1,48 +1,34 @@
 package json5
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
 
-func TestFormatValueString(t *testing.T) {
-	got := FormatValue("hello", 0)
-	if got != `"hello"` {
-		t.Errorf("got %s, want %q", got, `"hello"`)
-	}
-}
-
-func TestFormatValueBool(t *testing.T) {
-	if got := FormatValue(true, 0); got != "true" {
-		t.Errorf("got %s, want true", got)
-	}
-	if got := FormatValue(false, 0); got != "false" {
-		t.Errorf("got %s, want false", got)
-	}
-}
-
-func TestFormatValueNil(t *testing.T) {
-	if got := FormatValue(nil, 0); got != "null" {
-		t.Errorf("got %s, want null", got)
-	}
-}
-
-func TestFormatValueNumber(t *testing.T) {
+func TestFormatValueScalars(t *testing.T) {
 	tests := []struct {
 		name string
 		val  any
 		want string
 	}{
+		{"string", "hello", `"hello"`},
+		{"true", true, "true"},
+		{"false", false, "false"},
+		{"nil", nil, "null"},
 		{"integer", float64(42), "42"},
 		{"float", float64(3.14), "3.14"},
 		{"zero", float64(0), "0"},
 		{"negative", float64(-1), "-1"},
+		{"json_number_int", json.Number("42"), "42"},
+		{"json_number_float", json.Number("3.14"), "3.14"},
+		{"json_number_scientific", json.Number("1e10"), "1e10"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := FormatValue(tt.val, 0)
 			if got != tt.want {
-				t.Errorf("got %s, want %s", got, tt.want)
+				t.Errorf("FormatValue(%v) = %s, want %s", tt.val, got, tt.want)
 			}
 		})
 	}
@@ -57,7 +43,7 @@ func TestFormatObjectEmpty(t *testing.T) {
 
 func TestFormatObjectSimple(t *testing.T) {
 	data := map[string]any{
-		"name": "test",
+		"name":  "test",
 		"count": float64(5),
 	}
 	got := FormatObject(data)
@@ -154,5 +140,26 @@ func TestFormatValueTrailingCommas(t *testing.T) {
 		if !strings.HasSuffix(trimmed, ",") {
 			t.Errorf("expected trailing comma on line %q", trimmed)
 		}
+	}
+}
+
+func TestQuoteKey(t *testing.T) {
+	tests := []struct {
+		key  string
+		want string
+	}{
+		{"simple", "simple"},
+		{"with_underscore", "with_underscore"},
+		{"with-hyphen", `"with-hyphen"`},
+		{"has space", `"has space"`},
+		{"$dollar", "$dollar"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.key, func(t *testing.T) {
+			got := QuoteKey(tt.key)
+			if got != tt.want {
+				t.Errorf("QuoteKey(%q) = %s, want %s", tt.key, got, tt.want)
+			}
+		})
 	}
 }

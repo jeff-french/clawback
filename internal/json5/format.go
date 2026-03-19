@@ -9,6 +9,16 @@ import (
 
 const defaultIndent = "  "
 
+// QuoteKey returns a key suitable for JSON5 output: unquoted if it's a valid
+// identifier, or JSON-quoted otherwise.
+func QuoteKey(key string) string {
+	if NeedsQuoting(key) {
+		b, _ := json.Marshal(key)
+		return string(b)
+	}
+	return key
+}
+
 // FormatObject formats a map as a top-level JSON5 object string.
 func FormatObject(data map[string]any) string {
 	return FormatValue(data, 0)
@@ -66,11 +76,7 @@ func formatMap(data map[string]any, depth int) string {
 	b.WriteString("{\n")
 	for _, k := range keys {
 		b.WriteString(indent)
-		if NeedsQuoting(k) {
-			fmt.Fprintf(&b, "%q", k)
-		} else {
-			b.WriteString(k)
-		}
+		b.WriteString(QuoteKey(k))
 		b.WriteString(": ")
 		b.WriteString(FormatValue(data[k], depth+1))
 		b.WriteString(",\n")

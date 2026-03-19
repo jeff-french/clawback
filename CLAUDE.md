@@ -17,7 +17,7 @@ A Go CLI tool that manages modular OpenClaw configuration. It treats `openclaw.j
 cmd/           CLI commands (cobra)
 internal/
   config/      Tool config loading (.clawback.json5)
-  json5/       JSON5 parsing, $include resolution, surgical text editing
+  json5/       JSON5 parsing, $include resolution, surgical text editing, JSON5 formatting
   jsonutil/    Deep comparison, diff generation, path operations
   render/      Full render pipeline
 testdata/      Test fixtures
