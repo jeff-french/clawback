@@ -274,9 +274,9 @@ func TestNeedsQuoting(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.key, func(t *testing.T) {
-			got := needsQuoting(tt.key)
+			got := NeedsQuoting(tt.key)
 			if got != tt.want {
-				t.Errorf("needsQuoting(%q) = %v, want %v", tt.key, got, tt.want)
+				t.Errorf("NeedsQuoting(%q) = %v, want %v", tt.key, got, tt.want)
 			}
 		})
 	}

@@ -296,7 +296,7 @@ func appendKey(content string, key string, value string) string {
 
 	// Format: use unquoted key if the file already uses that style, otherwise quote.
 	quotedKey := fmt.Sprintf(`"%s"`, key)
-	if !needsQuoting(key) && usesUnquotedKeys(content) {
+	if !NeedsQuoting(key) && usesUnquotedKeys(content) {
 		quotedKey = key
 	}
 
@@ -318,7 +318,7 @@ func detectIndent(content string) string {
 	return "  "
 }
 
-func needsQuoting(key string) bool {
+func NeedsQuoting(key string) bool {
 	if len(key) == 0 {
 		return true
 	}

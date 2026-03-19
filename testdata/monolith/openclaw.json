@@ -1,0 +1,48 @@
+{
+  "agents": {
+    "default": "gpt-4",
+    "models": {
+      "gpt-4": {
+        "maxTokens": 4096
+      }
+    }
+  },
+  "bindings": [
+    {
+      "key": "ctrl+r",
+      "action": "reload"
+    },
+    {
+      "key": "ctrl+q",
+      "action": "quit"
+    }
+  ],
+  "channels": {
+    "discord": {
+      "enabled": true,
+      "token": "disc-token-123"
+    }
+  },
+  "env": {
+    "debug": true,
+    "logLevel": "info",
+    "timeout": 30
+  },
+  "meta": {
+    "generated": true,
+    "version": "2.0"
+  },
+  "name": "test-gateway",
+  "plugins": {
+    "installs": [
+      "plugin-a",
+      "plugin-b"
+    ],
+    "registry": "https://plugins.example.com"
+  },
+  "version": "1.0.0",
+  "wizard": {
+    "completed": true,
+    "step": 5
+  }
+}

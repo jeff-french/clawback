@@ -1,5 +1,6 @@
 # Binary
 clawback
 
-# Rendered test output
+# Rendered test output (but not monolith fixture which is an input)
 testdata/*/openclaw.json
+!testdata/monolith/openclaw.json

@@ -6,8 +6,9 @@ A Go CLI tool that manages modular OpenClaw configuration. It treats `openclaw.j
 
 ## Commands
 
+- `init` — Bootstrap modular config from an existing monolithic `openclaw.json`
 - `render` — Parse JSON5 sources, resolve `$include` directives, write `openclaw.json`
-- `diff` — Compare rendered output against current `openclaw.json` (exit 0 = clean, 1 = drifted)
+- `diff` — Compare rendered output against current `openclaw.json` (exit 0 = clean, 1 = drifted, 2 = error)
 - `sync` — Backport changes from `openclaw.json` to JSON5 source files, then re-render
 
 ## Project Structure

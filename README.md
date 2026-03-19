@@ -18,6 +18,9 @@ Treat `openclaw.json` as a **build artifact** rendered from a master `config/ope
 ## Usage
 
 ```bash
+# Initialize modular config from an existing openclaw.json
+clawback init
+
 # Render openclaw.json from config/openclaw.json5
 clawback render
 
@@ -147,30 +150,22 @@ Steps:
 1. Install the clawback binary:
    go install github.com/jeff-french/clawback@latest
 
-2. Split my existing ~/.openclaw/openclaw.json into modular JSON5 files under
-   ~/.openclaw/config/. Create a separate .json5 file for each top-level object
-   key (env.json5, auth.json5, agents.json5, channels.json5, plugins.json5,
-   hooks.json5, tools.json5, gateway.json5, skills.json5, messages.json5,
-   commands.json5, acp.json5). Keep the "bindings" array inline since $include
-   only supports objects.
+2. Initialize modular config from the existing openclaw.json:
+   clawback init
+   This automatically splits each top-level object key into a separate
+   config/*.json5 file, creates the master template with $include directives,
+   generates .clawback.json5, and verifies the round-trip.
 
-3. Create the master template at ~/.openclaw/config/openclaw.json5 that uses
-   { "$include": "./section.json5" } for each extracted section, with the
-   bindings array inlined.
+3. Verify everything is clean:
+   clawback diff
 
-4. Create ~/.openclaw/.clawback.json5 with default settings.
+4. Install the clawback skill so you know the workflow:
+   git clone https://github.com/jeff-french/clawback.git /tmp/clawback
+   cp -r /tmp/clawback/skills/clawback ~/.openclaw/skills/
+   rm -rf /tmp/clawback
 
-5. Run "clawback render" and verify the output matches the original openclaw.json
-   (use "clawback diff" to confirm).
-
-6. Install the clawback skill:
-   Clone https://github.com/jeff-french/clawback and copy skills/clawback/
-   to ~/.openclaw/skills/clawback/
-
-7. Add a heartbeat hook that runs "clawback diff --quiet" after gateway start
+5. Add a heartbeat hook that runs "clawback diff --quiet" after gateway start
    to detect config drift.
-
-After setup, verify everything is clean with "clawback diff".
 ```
 
 </details>

@@ -38,6 +38,11 @@ func NewRootCmd(opts ...string) *cobra.Command {
 				ctx.homeDir = filepath.Join(home, ".openclaw")
 			}
 
+			// init creates config from scratch — skip loading/validating it.
+			if cmd.Name() == "init" {
+				return nil
+			}
+
 			var err error
 			ctx.cfg, err = config.Load(ctx.homeDir)
 			if err != nil {
@@ -59,6 +64,7 @@ func NewRootCmd(opts ...string) *cobra.Command {
 	rootCmd.AddCommand(newRenderCmd(&ctx))
 	rootCmd.AddCommand(newDiffCmd(&ctx))
 	rootCmd.AddCommand(newSyncCmd(&ctx))
+	rootCmd.AddCommand(newInitCmd(&ctx))
 
 	return rootCmd
 }
