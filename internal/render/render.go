@@ -2,7 +2,9 @@ package render
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -40,7 +42,7 @@ func Render(homeDir string, cfg *config.Config) (*Result, error) {
 	// Silently skip only when the file doesn't exist yet (first render).
 	outputPath := cfg.OutputPath(homeDir)
 	existing, err := readExistingOutput(outputPath)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("reading existing output %s: %w", outputPath, err)
 	}
 	if existing != nil {

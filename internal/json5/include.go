@@ -52,7 +52,7 @@ func resolveValue(val any, baseDir, root string, visited map[string]bool) (any, 
 
 			// Path traversal check: included files must stay within root directory.
 			rel, err := filepath.Rel(root, absPath)
-			if err != nil || strings.HasPrefix(rel, "..") {
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 				return nil, "", fmt.Errorf("$include path %q escapes config directory", path)
 			}
 

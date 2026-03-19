@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jeff-french/clawback/internal/config"
@@ -155,5 +156,73 @@ func TestRenderRejectsSymlinkOutput(t *testing.T) {
 	_, err := Render(dir, cfg)
 	if err == nil {
 		t.Fatal("expected error when openclaw.json is a symlink, got nil")
+	}
+}
+
+func TestWriteOutputRejectsSymlink(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create a real file and a symlink where the output would go
+	realTarget := filepath.Join(dir, "real-output.json")
+	if err := os.WriteFile(realTarget, []byte(`{"name":"old"}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	symlinkPath := filepath.Join(dir, "openclaw.json")
+	if err := os.Symlink(realTarget, symlinkPath); err != nil {
+		t.Skip("symlinks not supported on this platform")
+	}
+
+	cfg := &config.Config{
+		ConfigDir:      "./config",
+		OutputFile:     "./openclaw.json",
+		MasterTemplate: "./config/openclaw.json5",
+		Passthrough:    []string{"meta"},
+	}
+
+	result := &Result{
+		Data: map[string]any{"name": "test"},
+		JSON: []byte(`{"name":"test"}` + "\n"),
+	}
+
+	err := WriteOutput(dir, cfg, result)
+	if err == nil {
+		t.Fatal("expected error when output path is a symlink, got nil")
+	}
+	if !strings.Contains(err.Error(), "symlink") {
+		t.Errorf("expected error to contain %q, got %q", "symlink", err.Error())
+	}
+}
+
+func TestRenderWithCorruptedOutputFile(t *testing.T) {
+	dir := t.TempDir()
+	configDir := filepath.Join(dir, "config")
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write a valid master template
+	template := `{
+  name: "test",
+  meta: { version: 1 },
+}`
+	if err := os.WriteFile(filepath.Join(configDir, "openclaw.json5"), []byte(template), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Write corrupted (invalid JSON) to openclaw.json
+	if err := os.WriteFile(filepath.Join(dir, "openclaw.json"), []byte(`{not valid json at all!!!`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := &config.Config{
+		ConfigDir:      "./config",
+		OutputFile:     "./openclaw.json",
+		MasterTemplate: "./config/openclaw.json5",
+		Passthrough:    []string{"meta"},
+	}
+
+	_, err := Render(dir, cfg)
+	if err == nil {
+		t.Fatal("expected error when openclaw.json contains invalid JSON, got nil")
 	}
 }

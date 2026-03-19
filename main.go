@@ -8,8 +8,15 @@ import (
 	"github.com/jeff-french/clawback/cmd"
 )
 
+// Set by goreleaser via ldflags.
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 func main() {
-	rootCmd := cmd.NewRootCmd()
+	rootCmd := cmd.NewRootCmd(version + " (" + commit + " " + date + ")")
 	if err := rootCmd.Execute(); err != nil {
 		var exitErr *cmd.ExitError
 		if errors.As(err, &exitErr) {

@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -127,6 +128,47 @@ func TestValidate(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestLoadRejectsOversizedConfig(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, ".clawback.json5")
+
+	// Write a file that exceeds the 10MB SafeReadFile limit (10<<20 + 1 bytes).
+	// config.Load now delegates to SafeReadFile which enforces the 10MB cap.
+	data := make([]byte, 10<<20+1)
+	for i := range data {
+		data[i] = ' '
+	}
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := Load(dir)
+	if err == nil {
+		t.Fatal("expected error for oversized config, got nil")
+	}
+	if !strings.Contains(err.Error(), "too large") {
+		t.Errorf("expected error to contain %q, got %q", "too large", err.Error())
+	}
+}
+
+func TestLoadInvalidJSON5(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, ".clawback.json5")
+
+	// Write malformed JSON5 content
+	if err := os.WriteFile(path, []byte(`{this is not valid json5: [}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, err := Load(dir)
+	if err == nil {
+		t.Fatal("expected error for invalid JSON5, got nil")
+	}
+	if !strings.Contains(err.Error(), "parsing") {
+		t.Errorf("expected error to contain %q, got %q", "parsing", err.Error())
 	}
 }
 

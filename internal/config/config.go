@@ -1,11 +1,13 @@
 package config
 
 import (
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
+	json5parser "github.com/jeff-french/clawback/internal/json5"
 	"github.com/titanous/json5"
 )
 
@@ -38,22 +40,11 @@ func Load(homeDir string) (*Config, error) {
 	}
 
 	path := filepath.Join(homeDir, ".clawback.json5")
-	info, err := os.Lstat(path)
+	data, err := json5parser.SafeReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			return cfg, nil
 		}
-		return nil, fmt.Errorf("stat %s: %w", path, err)
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return nil, fmt.Errorf("refusing to read symlink: %s", path)
-	}
-	const maxConfigSize = 1 << 20 // 1 MB
-	if info.Size() > maxConfigSize {
-		return nil, fmt.Errorf("config file too large (%d bytes, limit %d): %s", info.Size(), maxConfigSize, path)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
 
@@ -98,7 +89,7 @@ func (c *Config) Validate(homeDir string) error {
 	for _, ch := range checks {
 		abs := c.ResolvePath(homeDir, ch.val)
 		rel, err := filepath.Rel(root, abs)
-		if err != nil || strings.HasPrefix(rel, "..") {
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			return fmt.Errorf("config %s path %q escapes home directory", ch.name, ch.val)
 		}
 	}

@@ -2,16 +2,15 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"os"
+	"io/fs"
 
 	"github.com/jeff-french/clawback/internal/json5"
 	"github.com/jeff-french/clawback/internal/jsonutil"
 	"github.com/jeff-french/clawback/internal/render"
 	"github.com/spf13/cobra"
 )
-
-var errDiffFound = &ExitError{Code: 1}
 
 func newDiffCmd(ctx *appContext) *cobra.Command {
 	var quiet bool
@@ -30,11 +29,11 @@ func newDiffCmd(ctx *appContext) *cobra.Command {
 			outputPath := ctx.cfg.OutputPath(ctx.homeDir)
 			existingData, err := json5.SafeReadFile(outputPath)
 			if err != nil {
-				if os.IsNotExist(err) {
+				if errors.Is(err, fs.ErrNotExist) {
 					if !quiet {
 						fmt.Fprintln(cmd.OutOrStdout(), "Output file does not exist yet. Run 'clawback render' to create it.")
 					}
-					return errDiffFound
+					return &ExitError{Code: 1}
 				}
 				return fmt.Errorf("reading %s: %w", outputPath, err)
 			}
@@ -54,7 +53,7 @@ func newDiffCmd(ctx *appContext) *cobra.Command {
 			}
 
 			if quiet {
-				return errDiffFound
+				return &ExitError{Code: 1}
 			}
 
 			if jsonOutput {
@@ -63,11 +62,11 @@ func newDiffCmd(ctx *appContext) *cobra.Command {
 				if err := enc.Encode(diffs); err != nil {
 					return err
 				}
-				return errDiffFound
+				return &ExitError{Code: 1}
 			}
 
 			fmt.Fprint(cmd.OutOrStdout(), jsonutil.FormatDiffs(diffs))
-			return errDiffFound
+			return &ExitError{Code: 1}
 		},
 	}
 

@@ -361,6 +361,89 @@ func TestSyncDryRun(t *testing.T) {
 	}
 }
 
+func TestSyncAddedKeyInOutput(t *testing.T) {
+	dir := setupFixture(t, "simple")
+
+	// Render to create the output file.
+	_, err := executeCmd([]string{"--home", dir, "render"})
+	if err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+
+	// Add a new key inside "env" in openclaw.json that doesn't exist in env.json5.
+	outputPath := filepath.Join(dir, "openclaw.json")
+	data, _ := os.ReadFile(outputPath)
+	var obj map[string]any
+	json.Unmarshal(data, &obj)
+	env := obj["env"].(map[string]any)
+	env["newFeatureFlag"] = true
+	modified, _ := json.MarshalIndent(obj, "", "  ")
+	os.WriteFile(outputPath, modified, 0o600)
+
+	// Sync should backport the added key to the source file.
+	out, err := executeCmd([]string{"--home", dir, "sync"})
+	if err != nil {
+		t.Fatalf("sync failed: %v", err)
+	}
+	if !strings.Contains(out, "Updated") {
+		t.Errorf("expected 'Updated' in output, got: %s", out)
+	}
+
+	// Verify the source file now contains the new key.
+	envSrc, _ := os.ReadFile(filepath.Join(dir, "config", "env.json5"))
+	if !strings.Contains(string(envSrc), "newFeatureFlag") {
+		t.Errorf("expected env.json5 to contain 'newFeatureFlag' after sync, got:\n%s", envSrc)
+	}
+
+	// Verify a subsequent diff is clean (sync + re-render produced consistent state).
+	_, err = executeCmd([]string{"--home", dir, "diff"})
+	if err != nil {
+		t.Errorf("expected clean diff after sync, got error: %v", err)
+	}
+}
+
+func TestSyncRemovedKeyIgnored(t *testing.T) {
+	dir := setupFixture(t, "simple")
+
+	// Render to create the output file.
+	_, err := executeCmd([]string{"--home", dir, "render"})
+	if err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+
+	// Capture the original source file content.
+	envPath := filepath.Join(dir, "config", "env.json5")
+	envBefore, _ := os.ReadFile(envPath)
+
+	// Remove a key from openclaw.json that exists in the config source.
+	outputPath := filepath.Join(dir, "openclaw.json")
+	data, _ := os.ReadFile(outputPath)
+	var obj map[string]any
+	json.Unmarshal(data, &obj)
+	env := obj["env"].(map[string]any)
+	delete(env, "timeout")
+	modified, _ := json.MarshalIndent(obj, "", "  ")
+	os.WriteFile(outputPath, modified, 0o600)
+
+	// Run sync.
+	_, err = executeCmd([]string{"--home", dir, "sync"})
+	if err != nil {
+		t.Fatalf("sync failed: %v", err)
+	}
+
+	// The source file should still contain the "timeout" key — removals in
+	// openclaw.json should not strip keys from config sources.
+	envAfter, _ := os.ReadFile(envPath)
+	if !strings.Contains(string(envAfter), "timeout") {
+		t.Errorf("expected env.json5 to still contain 'timeout' after sync, got:\n%s", envAfter)
+	}
+
+	// The rest of the source file should be unchanged for the timeout line.
+	if !strings.Contains(string(envBefore), "timeout") {
+		t.Fatal("precondition failed: env.json5 should contain 'timeout' before sync")
+	}
+}
+
 // --- error case tests ---
 
 func TestRenderMissingConfig(t *testing.T) {

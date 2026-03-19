@@ -15,13 +15,20 @@ type appContext struct {
 	cfg     *config.Config
 }
 
-func NewRootCmd() *cobra.Command {
+// NewRootCmd creates the root command. Pass a version string (e.g. "1.0.0")
+// to enable the built-in --version flag; pass "" to omit it.
+func NewRootCmd(opts ...string) *cobra.Command {
 	var ctx appContext
+	ver := ""
+	if len(opts) > 0 {
+		ver = opts[0]
+	}
 
 	rootCmd := &cobra.Command{
-		Use:   "clawback",
-		Short: "Manage modular OpenClaw configuration",
-		Long:  "A CLI tool that manages modular OpenClaw configuration. It treats openclaw.json as a build artifact rendered from JSON5 source files via $include directives.",
+		Use:     "clawback",
+		Short:   "Manage modular OpenClaw configuration",
+		Long:    "A CLI tool that manages modular OpenClaw configuration. It treats openclaw.json as a build artifact rendered from JSON5 source files via $include directives.",
+		Version: ver,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if ctx.homeDir == "" {
 				home, err := os.UserHomeDir()

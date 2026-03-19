@@ -2,6 +2,7 @@ package json5
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -22,8 +23,10 @@ func ParseFile(path string) (map[string]any, error) {
 }
 
 // SafeReadFile reads a file after verifying it is not a symlink and is within
-// the size limit. It is exported so other packages can reuse the same checks.
+// the size limit. It opens the file first, then uses Fstat on the open
+// descriptor to eliminate the TOCTOU window between check and read.
 func SafeReadFile(path string) ([]byte, error) {
+	// Lstat first to reject symlinks before opening.
 	info, err := os.Lstat(path)
 	if err != nil {
 		return nil, err
@@ -31,10 +34,25 @@ func SafeReadFile(path string) ([]byte, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return nil, fmt.Errorf("refusing to read symlink: %s", path)
 	}
-	if info.Size() > maxFileSize {
-		return nil, fmt.Errorf("file too large (%d bytes, limit %d): %s", info.Size(), maxFileSize, path)
+
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
 	}
-	return os.ReadFile(path)
+	defer f.Close()
+
+	// Fstat the open fd to verify properties haven't changed since Lstat.
+	finfo, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !finfo.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular file: %s", path)
+	}
+	if finfo.Size() > maxFileSize {
+		return nil, fmt.Errorf("file too large (%d bytes, limit %d): %s", finfo.Size(), maxFileSize, path)
+	}
+	return io.ReadAll(f)
 }
 
 // SafeWriteFile writes data to path atomically, refusing to follow symlinks.
@@ -65,6 +83,10 @@ func SafeWriteFile(path string, data []byte, perm os.FileMode) error {
 	if _, err := tmp.Write(data); err != nil {
 		tmp.Close()
 		return fmt.Errorf("writing temp file: %w", err)
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return fmt.Errorf("syncing temp file: %w", err)
 	}
 	if err := tmp.Chmod(perm); err != nil {
 		tmp.Close()

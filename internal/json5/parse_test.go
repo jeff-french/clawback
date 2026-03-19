@@ -3,6 +3,7 @@ package json5
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -104,3 +105,174 @@ func TestParseFileRejectsSymlink(t *testing.T) {
 		t.Fatal("expected error when reading symlink, got nil")
 	}
 }
+
+func TestSafeWriteFile(t *testing.T) {
+	t.Run("happy path writes file with correct content and permissions", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "out.json5")
+		content := []byte(`{"hello": "world"}`)
+
+		if err := SafeWriteFile(path, content, 0o600); err != nil {
+			t.Fatalf("SafeWriteFile() unexpected error: %v", err)
+		}
+
+		got, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading written file: %v", err)
+		}
+		if string(got) != string(content) {
+			t.Errorf("content mismatch: got %q, want %q", got, content)
+		}
+
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("stat written file: %v", err)
+		}
+		if perm := info.Mode().Perm(); perm != 0o600 {
+			t.Errorf("permissions = %o, want 0600", perm)
+		}
+	})
+
+	t.Run("rejects symlink at target path", func(t *testing.T) {
+		dir := t.TempDir()
+
+		real := filepath.Join(dir, "real.json5")
+		if err := os.WriteFile(real, []byte("original"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		link := filepath.Join(dir, "link.json5")
+		if err := os.Symlink(real, link); err != nil {
+			t.Skip("symlinks not supported on this platform")
+		}
+
+		err := SafeWriteFile(link, []byte("malicious"), 0o600)
+		if err == nil {
+			t.Fatal("expected error when writing through symlink, got nil")
+		}
+		if !strings.Contains(err.Error(), "symlink") {
+			t.Errorf("error should mention symlink, got: %v", err)
+		}
+
+		// Verify the original file was not modified.
+		got, _ := os.ReadFile(real)
+		if string(got) != "original" {
+			t.Errorf("original file was modified through symlink")
+		}
+	})
+
+	t.Run("non-existent directory fails gracefully", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "no-such-dir", "file.json5")
+
+		err := SafeWriteFile(path, []byte("data"), 0o600)
+		if err == nil {
+			t.Fatal("expected error for non-existent directory, got nil")
+		}
+	})
+
+	t.Run("creates new file when target does not exist", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "brand-new.json5")
+
+		if err := SafeWriteFile(path, []byte("new content"), 0o600); err != nil {
+			t.Fatalf("SafeWriteFile() unexpected error: %v", err)
+		}
+
+		got, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading new file: %v", err)
+		}
+		if string(got) != "new content" {
+			t.Errorf("content = %q, want %q", got, "new content")
+		}
+	})
+
+	t.Run("overwrites existing regular file", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "existing.json5")
+
+		if err := os.WriteFile(path, []byte("old"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := SafeWriteFile(path, []byte("new"), 0o600); err != nil {
+			t.Fatalf("SafeWriteFile() unexpected error: %v", err)
+		}
+
+		got, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatalf("reading overwritten file: %v", err)
+		}
+		if string(got) != "new" {
+			t.Errorf("content = %q, want %q", got, "new")
+		}
+	})
+}
+
+func TestSafeReadFile(t *testing.T) {
+	t.Run("rejects file larger than maxFileSize", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "big.bin")
+
+		// Create a file of exactly maxFileSize+1 bytes.
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Truncate(maxFileSize + 1); err != nil {
+			f.Close()
+			t.Fatal(err)
+		}
+		f.Close()
+
+		_, err = SafeReadFile(path)
+		if err == nil {
+			t.Fatal("expected error for oversized file, got nil")
+		}
+		if !strings.Contains(err.Error(), "too large") {
+			t.Errorf("error should mention size, got: %v", err)
+		}
+	})
+
+	t.Run("rejects symlink", func(t *testing.T) {
+		dir := t.TempDir()
+
+		real := filepath.Join(dir, "real.txt")
+		if err := os.WriteFile(real, []byte("data"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		link := filepath.Join(dir, "link.txt")
+		if err := os.Symlink(real, link); err != nil {
+			t.Skip("symlinks not supported on this platform")
+		}
+
+		_, err := SafeReadFile(link)
+		if err == nil {
+			t.Fatal("expected error when reading symlink, got nil")
+		}
+		if !strings.Contains(err.Error(), "symlink") {
+			t.Errorf("error should mention symlink, got: %v", err)
+		}
+	})
+
+	t.Run("happy path reads regular file", func(t *testing.T) {
+		dir := t.TempDir()
+		path := filepath.Join(dir, "normal.txt")
+		want := []byte("hello world")
+
+		if err := os.WriteFile(path, want, 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		got, err := SafeReadFile(path)
+		if err != nil {
+			t.Fatalf("SafeReadFile() unexpected error: %v", err)
+		}
+		if string(got) != string(want) {
+			t.Errorf("content = %q, want %q", got, want)
+		}
+	})
+}
+
