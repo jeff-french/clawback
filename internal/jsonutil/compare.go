@@ -135,11 +135,11 @@ func FormatDiffs(diffs []Diff) string {
 	for _, d := range diffs {
 		switch d.Type {
 		case DiffAdded:
-			sb.WriteString(fmt.Sprintf("+ %s: %s\n", d.Path, formatValue(d.NewValue)))
+			fmt.Fprintf(&sb, "+ %s: %s\n", d.Path, formatValue(d.NewValue))
 		case DiffRemoved:
-			sb.WriteString(fmt.Sprintf("- %s: %s\n", d.Path, formatValue(d.OldValue)))
+			fmt.Fprintf(&sb, "- %s: %s\n", d.Path, formatValue(d.OldValue))
 		case DiffChanged:
-			sb.WriteString(fmt.Sprintf("~ %s: %s → %s\n", d.Path, formatValue(d.OldValue), formatValue(d.NewValue)))
+			fmt.Fprintf(&sb, "~ %s: %s → %s\n", d.Path, formatValue(d.OldValue), formatValue(d.NewValue))
 		}
 	}
 	return sb.String()

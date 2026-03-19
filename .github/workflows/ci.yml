@@ -39,7 +39,7 @@ jobs:
         with:
           go-version: stable
           cache: false
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v9
 
   all-checks:
     name: All checks

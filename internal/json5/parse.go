@@ -76,20 +76,20 @@ func SafeWriteFile(path string, data []byte, perm os.FileMode) error {
 	success := false
 	defer func() {
 		if !success {
-			os.Remove(tmpName)
+			_ = os.Remove(tmpName)
 		}
 	}()
 
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("writing temp file: %w", err)
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("syncing temp file: %w", err)
 	}
 	if err := tmp.Chmod(perm); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		return fmt.Errorf("setting permissions: %w", err)
 	}
 	if err := tmp.Close(); err != nil {
