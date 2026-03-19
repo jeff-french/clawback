@@ -72,7 +72,7 @@ func findKeyInJSON5(content string, pattern string) int {
 		// Skip block comments
 		if i+1 < len(content) && content[i] == '/' && content[i+1] == '*' {
 			i += 2
-			for i+1 < len(content) && !(content[i] == '*' && content[i+1] == '/') {
+			for i+1 < len(content) && (content[i] != '*' || content[i+1] != '/') {
 				i++
 			}
 			if i+1 < len(content) {
@@ -194,7 +194,7 @@ func findBracketEnd(content string, start int) int {
 		}
 		if i+1 < len(content) && ch == '/' && content[i+1] == '*' {
 			i += 2
-			for i+1 < len(content) && !(content[i] == '*' && content[i+1] == '/') {
+			for i+1 < len(content) && (content[i] != '*' || content[i+1] != '/') {
 				i++
 			}
 			if i+1 < len(content) {
@@ -207,9 +207,10 @@ func findBracketEnd(content string, start int) int {
 			i = findStringEnd(content, i)
 			continue
 		}
-		if ch == open {
+		switch ch {
+		case open:
 			depth++
-		} else if ch == close {
+		case close:
 			depth--
 		}
 		i++
@@ -240,7 +241,7 @@ func findOutermostClosingBrace(content string) int {
 		// Skip block comments
 		if i+1 < len(content) && content[i] == '/' && content[i+1] == '*' {
 			i += 2
-			for i+1 < len(content) && !(content[i] == '*' && content[i+1] == '/') {
+			for i+1 < len(content) && (content[i] != '*' || content[i+1] != '/') {
 				i++
 			}
 			if i+1 < len(content) {
@@ -253,9 +254,10 @@ func findOutermostClosingBrace(content string) int {
 			i = findStringEnd(content, i)
 			continue
 		}
-		if content[i] == '{' {
+		switch content[i] {
+		case '{':
 			depth++
-		} else if content[i] == '}' {
+		case '}':
 			depth--
 			if depth == 0 {
 				last = i

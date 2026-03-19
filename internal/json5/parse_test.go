@@ -221,10 +221,12 @@ func TestSafeReadFile(t *testing.T) {
 			t.Fatal(err)
 		}
 		if err := f.Truncate(maxFileSize + 1); err != nil {
-			f.Close()
+			_ = f.Close()
 			t.Fatal(err)
 		}
-		f.Close()
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
 
 		_, err = SafeReadFile(path)
 		if err == nil {
