@@ -135,6 +135,14 @@ Once installed, your agent will automatically use clawback when editing config s
 
 ## Install
 
+### Pre-built binaries
+
+Download the latest release for your platform from [GitHub Releases](https://github.com/jeff-french/clawback/releases).
+
+### From source
+
+Requires Go 1.22+:
+
 ```bash
 go install github.com/jeff-french/clawback@latest
 ```
