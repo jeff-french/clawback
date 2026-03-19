@@ -1,9 +1,12 @@
-linters-settings:
-  errcheck:
-    exclude-functions:
-      # Writing to stdout/stderr — errors are not actionable in a CLI.
-      - fmt.Fprint
-      - fmt.Fprintf
-      - fmt.Fprintln
-      # Deferred close on read-only file descriptors.
-      - (*os.File).Close
+version: "2"
+
+linters:
+  settings:
+    errcheck:
+      exclude-functions:
+        # Writing to stdout/stderr — errors are not actionable in a CLI.
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        # Deferred close on read-only file descriptors.
+        - (*os.File).Close
