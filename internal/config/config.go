@@ -44,6 +44,10 @@ func Load(homeDir string) (*Config, error) {
 	if info.Mode()&os.ModeSymlink != 0 {
 		return nil, fmt.Errorf("refusing to read symlink: %s", path)
 	}
+	const maxConfigSize = 1 << 20 // 1 MB
+	if info.Size() > maxConfigSize {
+		return nil, fmt.Errorf("config file too large (%d bytes, limit %d): %s", info.Size(), maxConfigSize, path)
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

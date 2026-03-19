@@ -57,6 +57,8 @@ func replaceExistingKey(content string, key string, newValue string) (string, bo
 }
 
 // findKeyInJSON5 finds a key pattern in JSON5 content, skipping occurrences in comments and strings.
+// Pattern matching is checked before string-skipping so that quoted key patterns (e.g. `"foo"`)
+// are found even though they start with a quote character.
 func findKeyInJSON5(content string, pattern string) int {
 	i := 0
 	for i < len(content) {
@@ -78,6 +80,20 @@ func findKeyInJSON5(content string, pattern string) int {
 			}
 			continue
 		}
+
+		// Check for key pattern match BEFORE string skipping, so that
+		// quoted key patterns like `"foo"` are not swallowed by the
+		// string-literal skip below.
+		if i+len(pattern) <= len(content) && content[i:i+len(pattern)] == pattern {
+			// Verify this is a key position: preceded by whitespace/brace/comma and followed by whitespace/colon
+			validBefore := i == 0 || isKeyBoundary(content[i-1])
+			afterIdx := i + len(pattern)
+			validAfter := afterIdx < len(content) && (content[afterIdx] == ':' || content[afterIdx] == ' ' || content[afterIdx] == '\t')
+			if validBefore && validAfter {
+				return i
+			}
+		}
+
 		// Skip string literals
 		if content[i] == '"' || content[i] == '\'' {
 			quote := content[i]
@@ -94,16 +110,6 @@ func findKeyInJSON5(content string, pattern string) int {
 			continue
 		}
 
-		// Check for key pattern match
-		if i+len(pattern) <= len(content) && content[i:i+len(pattern)] == pattern {
-			// Verify this is a key position: preceded by whitespace/brace/comma and followed by whitespace/colon
-			validBefore := i == 0 || isKeyBoundary(content[i-1])
-			afterIdx := i + len(pattern)
-			validAfter := afterIdx < len(content) && (content[afterIdx] == ':' || content[afterIdx] == ' ' || content[afterIdx] == '\t')
-			if validBefore && validAfter {
-				return i
-			}
-		}
 		i++
 	}
 	return -1

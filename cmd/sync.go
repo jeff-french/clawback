@@ -37,12 +37,9 @@ func runSync(cmd *cobra.Command, homeDir string, cfg *config.Config, dryRun bool
 		return err
 	}
 
-	// Read current openclaw.json — reject symlinks to prevent misdirection.
+	// Read current openclaw.json — reject symlinks and oversized files.
 	outputPath := cfg.OutputPath(homeDir)
-	if info, serr := os.Lstat(outputPath); serr == nil && info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("refusing to read symlink: %s", outputPath)
-	}
-	existingData, err := os.ReadFile(outputPath)
+	existingData, err := json5.SafeReadFile(outputPath)
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", outputPath, err)
 	}
@@ -118,16 +115,7 @@ func runSync(cmd *cobra.Command, homeDir string, cfg *config.Config, dryRun bool
 }
 
 func applyEdits(filePath string, diffs []jsonutil.Diff, sources map[string]string) error {
-	// Refuse to read or write a symlink — the source files should be real files.
-	info, err := os.Lstat(filePath)
-	if err != nil {
-		return err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return fmt.Errorf("refusing to modify symlink: %s", filePath)
-	}
-
-	content, err := os.ReadFile(filePath)
+	content, err := json5.SafeReadFile(filePath)
 	if err != nil {
 		return err
 	}

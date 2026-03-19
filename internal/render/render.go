@@ -61,14 +61,7 @@ func Render(homeDir string, cfg *config.Config) (*Result, error) {
 }
 
 func readExistingOutput(path string) (map[string]any, error) {
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		return nil, fmt.Errorf("refusing to read symlink: %s", path)
-	}
-	data, err := os.ReadFile(path)
+	data, err := json5.SafeReadFile(path)
 	if err != nil {
 		return nil, err
 	}

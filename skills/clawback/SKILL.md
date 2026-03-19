@@ -74,7 +74,5 @@ Treats `openclaw.json` as a build artifact rendered from modular JSON5 source fi
 
 If the binary is missing or needs updating:
 ```bash
-cd /tmp && rm -rf clawback
-GH_TOKEN=$(cat ~/.openclaw/credentials/github) gh repo clone jeff-french/clawback
-cd clawback && /usr/local/go/bin/go build -o ~/bin/clawback .
+go install github.com/jeff-french/clawback@latest
 ```

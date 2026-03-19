@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jeff-french/clawback/internal/json5"
 	"github.com/jeff-french/clawback/internal/jsonutil"
 	"github.com/jeff-french/clawback/internal/render"
 	"github.com/spf13/cobra"
@@ -25,9 +26,9 @@ func newDiffCmd() *cobra.Command {
 				return err
 			}
 
-			// Read current output file
+			// Read current output file (symlink + size checked)
 			outputPath := cfg.OutputPath(homeDir)
-			existingData, err := os.ReadFile(outputPath)
+			existingData, err := json5.SafeReadFile(outputPath)
 			if err != nil {
 				if os.IsNotExist(err) {
 					if !quiet {

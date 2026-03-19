@@ -56,6 +56,16 @@ func TestSetValue(t *testing.T) {
 			value:   `"newValue"`,
 			wantSub: `newKey: "newValue"`,
 		},
+		{
+			name: "replace quoted key value",
+			content: `{
+  "host": "localhost",
+  "port": 5432,
+}`,
+			key:     "host",
+			value:   `"remotehost"`,
+			wantSub: `"remotehost"`,
+		},
 	}
 
 	for _, tt := range tests {
@@ -68,6 +78,23 @@ func TestSetValue(t *testing.T) {
 				t.Errorf("result lost %q:\n%s", tt.wantKeep, result)
 			}
 		})
+	}
+}
+
+func TestSetValueQuotedKeyNoDuplicates(t *testing.T) {
+	content := `{
+  "host": "localhost",
+  "port": 5432,
+}`
+	result := SetValue(content, "host", `"newvalue"`)
+
+	// Must NOT create a duplicate key — the existing quoted key should be updated in-place.
+	if strings.Count(result, `"host"`) != 1 {
+		t.Errorf("expected exactly 1 occurrence of '\"host\"', got %d in:\n%s",
+			strings.Count(result, `"host"`), result)
+	}
+	if !strings.Contains(result, `"newvalue"`) {
+		t.Errorf("expected value to be updated in:\n%s", result)
 	}
 }
 
