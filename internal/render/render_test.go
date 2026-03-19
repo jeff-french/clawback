@@ -60,10 +60,24 @@ func TestRender(t *testing.T) {
 	}
 }
 
+func mustMkdir(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		t.Fatalf("creating directory %s: %v", path, err)
+	}
+}
+
+func mustWriteFile(t *testing.T, path string, data []byte) {
+	t.Helper()
+	if err := os.WriteFile(path, data, 0o644); err != nil {
+		t.Fatalf("writing file %s: %v", path, err)
+	}
+}
+
 func TestRenderWithPassthrough(t *testing.T) {
 	dir := t.TempDir()
 	configDir := filepath.Join(dir, "config")
-	os.MkdirAll(configDir, 0o755)
+	mustMkdir(t, configDir)
 
 	// Write master template
 	template := `{
@@ -71,11 +85,11 @@ func TestRenderWithPassthrough(t *testing.T) {
   meta: { version: 1 },
   env: { $include: "./env.json5" },
 }`
-	os.WriteFile(filepath.Join(configDir, "openclaw.json5"), []byte(template), 0o644)
+	mustWriteFile(t, filepath.Join(configDir, "openclaw.json5"), []byte(template))
 
 	// Write env include
 	env := `{ debug: true }`
-	os.WriteFile(filepath.Join(configDir, "env.json5"), []byte(env), 0o644)
+	mustWriteFile(t, filepath.Join(configDir, "env.json5"), []byte(env))
 
 	// Write existing openclaw.json with passthrough data
 	existing := map[string]any{
@@ -84,7 +98,7 @@ func TestRenderWithPassthrough(t *testing.T) {
 		"env":  map[string]any{"debug": false},
 	}
 	existingJSON, _ := json.MarshalIndent(existing, "", "  ")
-	os.WriteFile(filepath.Join(dir, "openclaw.json"), existingJSON, 0o644)
+	mustWriteFile(t, filepath.Join(dir, "openclaw.json"), existingJSON)
 
 	cfg := &config.Config{
 		ConfigDir:      "./config",
@@ -132,14 +146,14 @@ func TestRenderMissingTemplate(t *testing.T) {
 func TestRenderRejectsSymlinkOutput(t *testing.T) {
 	dir := t.TempDir()
 	configDir := filepath.Join(dir, "config")
-	os.MkdirAll(configDir, 0o755)
+	mustMkdir(t, configDir)
 
 	// Minimal valid template
-	os.WriteFile(filepath.Join(configDir, "openclaw.json5"), []byte(`{ name: "test" }`), 0o644)
+	mustWriteFile(t, filepath.Join(configDir, "openclaw.json5"), []byte(`{ name: "test" }`))
 
 	// Replace openclaw.json with a symlink pointing elsewhere
 	realTarget := filepath.Join(dir, "real-output.json")
-	os.WriteFile(realTarget, []byte(`{"name":"old"}`), 0o644)
+	mustWriteFile(t, realTarget, []byte(`{"name":"old"}`))
 	symlinkPath := filepath.Join(dir, "openclaw.json")
 	if err := os.Symlink(realTarget, symlinkPath); err != nil {
 		t.Skip("symlinks not supported on this platform")

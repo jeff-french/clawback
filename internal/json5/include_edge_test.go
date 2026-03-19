@@ -7,6 +7,13 @@ import (
 	"testing"
 )
 
+func writeTestFile(t *testing.T, path, content string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		t.Fatalf("writing test file %s: %v", path, err)
+	}
+}
+
 func TestCircularIncludeSelfReference(t *testing.T) {
 	dir := t.TempDir()
 
@@ -32,9 +39,9 @@ func TestCircularIncludeThreeWay(t *testing.T) {
 	dir := t.TempDir()
 
 	// a -> b -> c -> a
-	os.WriteFile(filepath.Join(dir, "a.json5"), []byte(`{ next: { $include: "./b.json5" } }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "b.json5"), []byte(`{ next: { $include: "./c.json5" } }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "c.json5"), []byte(`{ next: { $include: "./a.json5" } }`), 0o644)
+	writeTestFile(t, filepath.Join(dir, "a.json5"), `{ next: { $include: "./b.json5" } }`)
+	writeTestFile(t, filepath.Join(dir, "b.json5"), `{ next: { $include: "./c.json5" } }`)
+	writeTestFile(t, filepath.Join(dir, "c.json5"), `{ next: { $include: "./a.json5" } }`)
 
 	data := map[string]any{
 		"start": map[string]any{"$include": "./a.json5"},
@@ -49,11 +56,11 @@ func TestDeeplyNestedIncludes(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create a chain of 5 levels of includes.
-	os.WriteFile(filepath.Join(dir, "level5.json5"), []byte(`{ value: "deep" }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "level4.json5"), []byte(`{ nested: { $include: "./level5.json5" } }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "level3.json5"), []byte(`{ nested: { $include: "./level4.json5" } }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "level2.json5"), []byte(`{ nested: { $include: "./level3.json5" } }`), 0o644)
-	os.WriteFile(filepath.Join(dir, "level1.json5"), []byte(`{ nested: { $include: "./level2.json5" } }`), 0o644)
+	writeTestFile(t, filepath.Join(dir, "level5.json5"), `{ value: "deep" }`)
+	writeTestFile(t, filepath.Join(dir, "level4.json5"), `{ nested: { $include: "./level5.json5" } }`)
+	writeTestFile(t, filepath.Join(dir, "level3.json5"), `{ nested: { $include: "./level4.json5" } }`)
+	writeTestFile(t, filepath.Join(dir, "level2.json5"), `{ nested: { $include: "./level3.json5" } }`)
+	writeTestFile(t, filepath.Join(dir, "level1.json5"), `{ nested: { $include: "./level2.json5" } }`)
 
 	data := map[string]any{
 		"root": map[string]any{"$include": "./level1.json5"},
@@ -99,7 +106,7 @@ func TestIncludeNonStringValue(t *testing.T) {
 func TestIncludeInvalidJSON5(t *testing.T) {
 	dir := t.TempDir()
 
-	os.WriteFile(filepath.Join(dir, "bad.json5"), []byte(`{ invalid: }`), 0o644)
+	writeTestFile(t, filepath.Join(dir, "bad.json5"), `{ invalid: }`)
 
 	data := map[string]any{
 		"section": map[string]any{"$include": "./bad.json5"},
@@ -146,7 +153,7 @@ func TestIncludePreservesNonMapValues(t *testing.T) {
 func TestIncludeEmptyObject(t *testing.T) {
 	dir := t.TempDir()
 
-	os.WriteFile(filepath.Join(dir, "empty.json5"), []byte(`{}`), 0o644)
+	writeTestFile(t, filepath.Join(dir, "empty.json5"), `{}`)
 
 	data := map[string]any{
 		"section": map[string]any{"$include": "./empty.json5"},
@@ -196,7 +203,7 @@ func TestSafeReadFileRejectsSymlink(t *testing.T) {
 	dir := t.TempDir()
 
 	realFile := filepath.Join(dir, "real.json5")
-	os.WriteFile(realFile, []byte(`{ key: "value" }`), 0o644)
+	writeTestFile(t, realFile, `{ key: "value" }`)
 
 	link := filepath.Join(dir, "link.json5")
 	if err := os.Symlink(realFile, link); err != nil {

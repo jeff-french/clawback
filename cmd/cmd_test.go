@@ -51,6 +51,36 @@ func executeCmd(args []string) (string, error) {
 	return buf.String(), err
 }
 
+// mustRender renders the fixture and returns the home dir path.
+func mustRender(t *testing.T, dir string) {
+	t.Helper()
+	if _, err := executeCmd([]string{"--home", dir, "render"}); err != nil {
+		t.Fatalf("render failed: %v", err)
+	}
+}
+
+// mutateOutput reads openclaw.json, applies fn to the parsed object, and writes it back.
+func mutateOutput(t *testing.T, dir string, fn func(map[string]any)) {
+	t.Helper()
+	outputPath := filepath.Join(dir, "openclaw.json")
+	data, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("reading output: %v", err)
+	}
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err != nil {
+		t.Fatalf("parsing output: %v", err)
+	}
+	fn(obj)
+	modified, err := json.MarshalIndent(obj, "", "  ")
+	if err != nil {
+		t.Fatalf("marshaling output: %v", err)
+	}
+	if err := os.WriteFile(outputPath, modified, 0o600); err != nil {
+		t.Fatalf("writing output: %v", err)
+	}
+}
+
 // --- render command tests ---
 
 func TestRenderSimple(t *testing.T) {
@@ -179,21 +209,10 @@ func TestDiffClean(t *testing.T) {
 
 func TestDiffDrifted(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render first.
-	_, err := executeCmd([]string{"--home", dir, "render"})
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
-	// Modify the output file to create drift.
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	obj["name"] = "drifted-name"
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		obj["name"] = "drifted-name"
+	})
 
 	// Diff should detect drift.
 	out, err := executeCmd([]string{"--home", dir, "diff"})
@@ -208,16 +227,10 @@ func TestDiffDrifted(t *testing.T) {
 
 func TestDiffQuiet(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render, then modify.
-	executeCmd([]string{"--home", dir, "render"})
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	obj["extra"] = "key"
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		obj["extra"] = "key"
+	})
 
 	out, err := executeCmd([]string{"--home", dir, "diff", "--quiet"})
 	var exitErr *ExitError
@@ -232,15 +245,10 @@ func TestDiffQuiet(t *testing.T) {
 
 func TestDiffJSON(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	executeCmd([]string{"--home", dir, "render"})
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	obj["name"] = "changed"
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		obj["name"] = "changed"
+	})
 
 	out, err := executeCmd([]string{"--home", dir, "diff", "--json"})
 	var exitErr *ExitError
@@ -294,22 +302,11 @@ func TestSyncAlreadyInSync(t *testing.T) {
 
 func TestSyncBackport(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render to create the output file.
-	_, err := executeCmd([]string{"--home", dir, "render"})
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
-	// Modify openclaw.json to simulate a manual edit.
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	env := obj["env"].(map[string]any)
-	env["debug"] = false
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		env := obj["env"].(map[string]any)
+		env["debug"] = false
+	})
 
 	// Sync should backport changes.
 	out, err := executeCmd([]string{"--home", dir, "sync"})
@@ -332,17 +329,11 @@ func TestSyncBackport(t *testing.T) {
 
 func TestSyncDryRun(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render and modify.
-	executeCmd([]string{"--home", dir, "render"})
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	env := obj["env"].(map[string]any)
-	env["debug"] = false
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		env := obj["env"].(map[string]any)
+		env["debug"] = false
+	})
 
 	// Dry-run should show what would change but not modify files.
 	envBefore, _ := os.ReadFile(filepath.Join(dir, "config", "env.json5"))
@@ -363,22 +354,11 @@ func TestSyncDryRun(t *testing.T) {
 
 func TestSyncAddedKeyInOutput(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render to create the output file.
-	_, err := executeCmd([]string{"--home", dir, "render"})
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
-
-	// Add a new key inside "env" in openclaw.json that doesn't exist in env.json5.
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	env := obj["env"].(map[string]any)
-	env["newFeatureFlag"] = true
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mustRender(t, dir)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		env := obj["env"].(map[string]any)
+		env["newFeatureFlag"] = true
+	})
 
 	// Sync should backport the added key to the source file.
 	out, err := executeCmd([]string{"--home", dir, "sync"})
@@ -404,26 +384,19 @@ func TestSyncAddedKeyInOutput(t *testing.T) {
 
 func TestSyncRemovedKeyIgnored(t *testing.T) {
 	dir := setupFixture(t, "simple")
-
-	// Render to create the output file.
-	_, err := executeCmd([]string{"--home", dir, "render"})
-	if err != nil {
-		t.Fatalf("render failed: %v", err)
-	}
+	mustRender(t, dir)
 
 	// Capture the original source file content.
 	envPath := filepath.Join(dir, "config", "env.json5")
-	envBefore, _ := os.ReadFile(envPath)
+	envBefore, err := os.ReadFile(envPath)
+	if err != nil {
+		t.Fatalf("reading env.json5: %v", err)
+	}
 
-	// Remove a key from openclaw.json that exists in the config source.
-	outputPath := filepath.Join(dir, "openclaw.json")
-	data, _ := os.ReadFile(outputPath)
-	var obj map[string]any
-	json.Unmarshal(data, &obj)
-	env := obj["env"].(map[string]any)
-	delete(env, "timeout")
-	modified, _ := json.MarshalIndent(obj, "", "  ")
-	os.WriteFile(outputPath, modified, 0o600)
+	mutateOutput(t, dir, func(obj map[string]any) {
+		env := obj["env"].(map[string]any)
+		delete(env, "timeout")
+	})
 
 	// Run sync.
 	_, err = executeCmd([]string{"--home", dir, "sync"})
