@@ -16,6 +16,11 @@ Thanks for your interest in contributing! This document covers how to get starte
    go test ./...
    go vet ./...
    ```
+4. Install pre-commit hooks:
+   ```bash
+   git config core.hooksPath githooks
+   ```
+   This runs `go build`, `go vet`, `gofmt`, and `golangci-lint` (if installed) before each commit.
 
 Requires **Go 1.22+**.
 
