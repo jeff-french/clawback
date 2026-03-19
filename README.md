@@ -24,12 +24,24 @@ clawback render
 # Show diffs between current openclaw.json and what render would produce
 clawback diff
 
+# Output diff as JSON
+clawback diff --json
+
 # Backport changes from openclaw.json to JSON5 sources, then re-render
 clawback sync
+
+# Preview what sync would change without modifying files
+clawback sync --dry-run
 
 # Check exit code only (for CI/heartbeat)
 clawback diff --quiet
 ```
+
+### Global Flags
+
+| Flag | Description |
+|------|-------------|
+| `--home` | OpenClaw home directory (default: `~/.openclaw`) |
 
 ## Configuration
 

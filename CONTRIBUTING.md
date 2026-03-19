@@ -1,24 +1,50 @@
 # Contributing to clawback
 
-Thanks for your interest in contributing!
+Thanks for your interest in contributing! This document covers how to get started, submit changes, and what to expect during review.
 
 ## Getting Started
 
-```bash
-git clone https://github.com/jeff-french/clawback.git
-cd clawback
-go build -o clawback .
-go test ./...
-```
+1. Fork the repository on GitHub
+2. Clone your fork locally:
+   ```bash
+   git clone https://github.com/<your-username>/clawback.git
+   cd clawback
+   ```
+3. Build and verify everything works:
+   ```bash
+   go build -o clawback .
+   go test ./...
+   go vet ./...
+   ```
 
-Requires Go 1.22+.
+Requires **Go 1.22+**.
 
-## Submitting Changes
+## Making Changes
 
-1. Fork the repo and create a feature branch
+1. Create a feature branch from `main`:
+   ```bash
+   git checkout -b my-feature
+   ```
 2. Make your changes
-3. Ensure `go test ./...` and `go vet ./...` pass
-4. Submit a pull request with a clear description of the change
+3. Ensure tests and vet pass:
+   ```bash
+   go test ./...
+   go vet ./...
+   ```
+4. Commit with a clear, concise message describing the change
+
+## Submitting a Pull Request
+
+1. Push your branch to your fork:
+   ```bash
+   git push origin my-feature
+   ```
+2. Open a pull request against the `main` branch
+3. Include a clear description of:
+   - What the change does
+   - Why it is needed
+   - How it was tested
+4. A maintainer will review your PR. You may be asked to make revisions.
 
 ## Reporting Issues
 
@@ -26,6 +52,7 @@ Open an issue at https://github.com/jeff-french/clawback/issues with:
 - What you expected to happen
 - What actually happened
 - Steps to reproduce
+- Your Go version and OS
 
 ## Code Style
 
@@ -33,6 +60,11 @@ Open an issue at https://github.com/jeff-french/clawback/issues with:
 - Wrap errors with `fmt.Errorf("context: %w", err)`
 - Write table-driven tests
 - No global mutable state
+- Keep functions focused and testable
+
+## Questions and Discussion
+
+If you have questions about the project or want to discuss a potential change before writing code, open a GitHub issue. There is no separate chat or mailing list at this time.
 
 ## License
 
