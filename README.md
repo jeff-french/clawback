@@ -34,6 +34,7 @@ clawback sync
 clawback sync --dry-run
 
 # Check exit code only (for CI/heartbeat)
+# Exit codes: 0 = clean, 1 = drifted, 2 = error
 clawback diff --quiet
 ```
 
@@ -109,7 +110,12 @@ clawback diff
 
 **CI / heartbeat drift check:**
 ```bash
-clawback diff --quiet && echo "clean" || echo "drifted — run sync"
+clawback diff --quiet
+status=$?
+if [ $status -eq 0 ]; then echo "clean"
+elif [ $status -eq 1 ]; then echo "drifted — run sync"
+else echo "error"; exit $status
+fi
 ```
 
 ## Known Limitations

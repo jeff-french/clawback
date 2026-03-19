@@ -26,10 +26,11 @@ Requires **Go 1.22+**.
    git checkout -b my-feature
    ```
 2. Make your changes
-3. Ensure tests and vet pass:
+3. Ensure tests, vet, and lint pass:
    ```bash
    go test ./...
    go vet ./...
+   golangci-lint run  # install: https://golangci-lint.run/welcome/install/
    ```
 4. Commit with a clear, concise message describing the change
 
