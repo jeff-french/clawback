@@ -72,9 +72,13 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
       - name: Install git-cliff
         uses: kenji-miyake/setup-git-cliff@2778609c643a39a2576c4bae2e493b855eb4aee8 # v2
       - name: Generate CHANGELOG

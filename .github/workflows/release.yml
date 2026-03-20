@@ -20,9 +20,13 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - uses: actions/setup-go@v6
         with:
