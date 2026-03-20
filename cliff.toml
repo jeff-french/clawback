@@ -41,6 +41,7 @@ commit_parsers = [
   { message = "^build", group = "CI/CD" },
   { message = "^chore", group = "Miscellaneous" },
   { message = "^style", group = "Styling" },
+  { message = ".*", group = "Other" },
 ]
 filter_commits = true
 tag_pattern = "v[0-9].*"
