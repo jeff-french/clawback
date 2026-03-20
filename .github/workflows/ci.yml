@@ -14,6 +14,30 @@ permissions:
   contents: read
 
 jobs:
+  commits:
+    name: Conventional commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate commit messages
+        run: |
+          pattern='^(feat|fix|docs|ci|chore|refactor|test|perf|build|style)(\(.+\))?(!)?: .+'
+          base=${{ github.event.pull_request.base.sha }}
+          for sha in $(git rev-list "$base"..HEAD); do
+            msg=$(git log --format='%s' -1 "$sha")
+            if echo "$msg" | grep -qE '^Merge '; then
+              continue
+            fi
+            if ! echo "$msg" | grep -qE "$pattern"; then
+              echo "::error::Bad commit message: $msg"
+              echo "Expected format: type(scope): description"
+              exit 1
+            fi
+          done
+
   test:
     name: Test (Go ${{ matrix.go-version }})
     runs-on: ubuntu-latest
@@ -44,7 +68,7 @@ jobs:
   all-checks:
     name: All checks
     if: always()
-    needs: [test, lint]
+    needs: [commits, test, lint]
     runs-on: ubuntu-latest
     steps:
       - name: Decide status

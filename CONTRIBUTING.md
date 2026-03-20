@@ -37,7 +37,7 @@ Requires **Go 1.22+**.
    go vet ./...
    golangci-lint run  # install: https://golangci-lint.run/welcome/install/
    ```
-4. Commit with a clear, concise message describing the change
+4. Commit with a [Conventional Commits](https://www.conventionalcommits.org/) message (the `commit-msg` hook validates this automatically)
 
 ## Submitting a Pull Request
 
@@ -59,6 +59,30 @@ Open an issue at https://github.com/jeff-french/clawback/issues with:
 - What actually happened
 - Steps to reproduce
 - Your Go version and OS
+
+## Commit Messages
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/).
+The `commit-msg` hook validates this automatically.
+
+Format: `type(scope): description`
+
+| Type | When to use |
+|------|-------------|
+| `feat` | New feature or capability |
+| `fix` | Bug fix |
+| `docs` | Documentation only |
+| `ci` | CI/CD changes |
+| `chore` | Maintenance, deps |
+| `refactor` | Code change that neither fixes nor adds |
+| `test` | Adding or updating tests |
+| `perf` | Performance improvement |
+
+Examples:
+- `feat(init): add --force flag for re-initialization`
+- `fix(sync): preserve comments when backporting arrays`
+- `docs: update README install instructions`
+- `ci: add conventional commit validation`
 
 ## Code Style
 

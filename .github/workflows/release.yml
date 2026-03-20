@@ -36,3 +36,25 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  changelog:
+    name: Update CHANGELOG
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install git-cliff
+        uses: kenji-miyake/setup-git-cliff@v2
+      - name: Generate CHANGELOG
+        run: git-cliff --output CHANGELOG.md
+      - name: Commit CHANGELOG
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git diff --cached --quiet || git commit -m "docs: update CHANGELOG.md for $(git describe --tags --abbrev=0)"
+          git push
