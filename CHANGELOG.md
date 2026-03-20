@@ -2,11 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.0.3] - 2026-03-20
 
 ### Bug Fixes
 
 - Pass version tag to release notes generation (#10)(ac29cba)
+
+### Documentation
+
+- Update CHANGELOG.md(dabe9f1)
 ## [1.0.2] - 2026-03-20
 
 ### Bug Fixes
