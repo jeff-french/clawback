@@ -8,6 +8,10 @@ All notable changes to this project will be documented in this file.
 
 - Unified changelog workflow with git-cliff (#7)(448510f)
 - Use deploy key for changelog and release pushes (#8)(f18bb11)
+
+### Documentation
+
+- Update CHANGELOG.md(ac8825c)
 ## [1.0.1] - 2026-03-20
 
 ### CI/CD
