@@ -270,6 +270,7 @@ All notable changes to this project will be documented in this file.
 - Update CHANGELOG.md(5a79cbd)
 - Update CHANGELOG.md(a299db6)
 - Update CHANGELOG.md(d6655e8)
+- Update CHANGELOG.md(fdb590b)
 ## [1.0.1] - 2026-03-20
 
 ### CI/CD
