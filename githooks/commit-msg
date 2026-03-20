@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Validate conventional commit format on the first line.
+# Merge commits and fixup/squash commits are allowed through.
+
+msg=$(head -1 "$1")
+
+# Allow merge commits
+if echo "$msg" | grep -qE '^Merge '; then
+  exit 0
+fi
+
+pattern='^(feat|fix|docs|ci|chore|refactor|test|perf|build|style)(\(.+\))?(!)?: .+'
+if ! echo "$msg" | grep -qE "$pattern"; then
+  echo "ERROR: Commit message must follow Conventional Commits format:"
+  echo "  type(scope): description"
+  echo ""
+  echo "  Types: feat, fix, docs, ci, chore, refactor, test, perf, build, style"
+  echo "  Example: feat(init): add --force flag"
+  echo ""
+  echo "  Your message: $msg"
+  exit 1
+fi
