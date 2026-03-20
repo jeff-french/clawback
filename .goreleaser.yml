@@ -29,28 +29,6 @@ archives:
 checksum:
   name_template: checksums.txt
 
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^Merge"
-      - "^chore\\(deps\\)"
-  groups:
-    - title: "Features"
-      regexp: "^feat"
-    - title: "Bug Fixes"
-      regexp: "^fix"
-    - title: "Performance"
-      regexp: "^perf"
-    - title: "Refactoring"
-      regexp: "^refactor"
-    - title: "Documentation"
-      regexp: "^docs"
-    - title: "CI/CD"
-      regexp: "^(ci|build)"
-    - title: "Other"
-      order: 999
-
 release:
   github:
     owner: jeff-french
