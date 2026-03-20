@@ -68,7 +68,9 @@ jobs:
           echo "Releasing $VERSION"
 
       - name: Generate release notes
-        run: git-cliff --unreleased --strip header > /tmp/release-notes.md
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          git-cliff --unreleased --tag "$VERSION" --strip header > /tmp/release-notes.md
 
       - name: Generate CHANGELOG
         run: |
