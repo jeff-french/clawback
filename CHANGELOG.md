@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.0.2] - 2026-03-20
 
 ### Bug Fixes
 
@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 ### Documentation
 
 - Update CHANGELOG.md(ac8825c)
+- Update CHANGELOG.md(437cc94)
 ## [1.0.1] - 2026-03-20
 
 ### CI/CD
